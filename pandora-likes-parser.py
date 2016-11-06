@@ -1,3 +1,4 @@
+# This Python file uses the following encoding: utf-8
 from bs4 import BeautifulSoup
 
 file = "./pandora.html"
@@ -11,40 +12,40 @@ def read_file(f):
 
 
 def write_songs(soup):
-    c = 0
+    """Find songs in soup and write them to file."""
     stations = {}
-    for line in soup.find_all("div", "infobox-body"):
-        if c < 10:
-            artist = line.p.a.text
-            title = line.h3.a.text
-            # f.write(artist + " - " + title + "\n")
-            station = line.find("a", "like_context_stationname").text
-            # print artist, title, station
-            if station not in stations:
-                stations[station] = [str(artist + " - " + title).strip()]
-            else:
-                stations[station].append(
-                    str(artist + " - " + title).strip())
-            c += 1
-        else:
-            break
-    with open("./songs1.txt", mode="a+") as f:
 
-        # print stations
+    for line in soup.find_all("div", "infobox-body"):
+        artist = line.p.a.text
+        title = line.h3.a.text
+        station = line.find("a", "like_context_stationname").text.encode(
+            "utf-8")
+        try:
+            song = str(artist + " - " + title).strip()
+        except UnicodeEncodeError as e:
+            song = u" - ".join((artist, title)).encode("utf-8").strip()
+        if station not in stations:
+            stations[station] = [song]
+        else:
+            stations[station].append(song)
+
+    with open("./songs.txt", mode="a+") as f:
+        songs_set = set()
         for st in stations:
-            # print st
             for s in stations.get(st):
                 song_line = s + " | " + st + '\n'
-                if s not in f:
+                if s not in songs_set:
+                    songs_set.add(s)
                     f.write(song_line)
+                else:
+                    print s
+    return
+
+
 write_songs(read_file(file))
-
-
-def clean_dupes():
-    with open("./songs.txt", mode="r") as old:
-        with open("./songs-clean.txt", mode="w+") as new:
-            songset = set()
-            for line in old:
-                songset.add(line)
-            for song in songset:
-                new.write(song)
+# with open("./songs.txt", "r") as f1, open("./songs10.txt", "w+") as f2:
+#     songs = set()
+#     for line in f1.readlines():
+#         songs.add(line)
+#     for song in songs:
+#         f2.write(song)

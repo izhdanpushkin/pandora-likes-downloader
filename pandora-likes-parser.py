@@ -7,8 +7,12 @@ file = "./pandora.html"
 
 def read_file(f):
     """Convert html to a beautiful soup instance."""
-    with open(f, mode="r") as html_doc:
-        soup = BeautifulSoup(html_doc, "html.parser")
+    try:
+        with open(f, mode="r") as html_doc:
+            soup = BeautifulSoup(html_doc, "html.parser")
+    except IOError as e:
+        print("No 'pandora.html' file was found in the current directory")
+        raise e
     return soup
 
 
@@ -57,4 +61,4 @@ def write_songs(soup):
     return
 
 
-write_songs(read_file(file))
+# write_songs(read_file(file))

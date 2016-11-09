@@ -1,14 +1,16 @@
 import json
 import os
 import requests
+import re
 from bs4 import BeautifulSoup
 
 songs = []
-with open ("./songs-clean.txt", "r") as s:
+with open ("./songs.txt", "r") as s:
     for e in s.readlines():
         if "/" in e:
             e = e.replace("/", "")
-        songs.append(e[0:-1])
+        name = e.split(" | ")[0]
+        songs.append(name)
 
 
 def yt_query(song):
@@ -17,7 +19,8 @@ def yt_query(song):
         song_split = ""
         for word in song.split():
             if song.split().index(word) == len(song.split()) - 1:
-                song_split += str(word + "+lyrics")
+                # song_split += str(word + "+lyrics")
+                song_split += str(word)
                 continue
             song_split += str(word) + "+"
         return song_split
@@ -25,15 +28,36 @@ def yt_query(song):
 
 
 def yt_request(query):
-    """Search youtube with provided query
-    and extract id of the first video.
+    """Search youtube with provided query, match videos with
+    song's name and extract id of the best match.
     """
     r = requests.get(
         "https://www.youtube.com/results?search_query={}".format(query))
     soup = BeautifulSoup(r.text, "html.parser")
-    video = soup.find_all("div", "yt-lockup-video")
-    video_id = video[0]["data-context-item-id"]
-    return video_id
+    videos = soup.find_all("div", "yt-lockup-video")
+    titles = soup.find_all("h3", 'yt-lockup-title')
+    best_match = ['', 0, '']
+
+    for e in range(0, len(videos)):
+        song = query.lower().split("+")
+        video_id = videos[e]["data-context-item-id"]
+        title = soup.find(
+            'a', 'yt-uix-tile-link', href=re.compile(video_id)).string
+
+        matched = 0
+        for word in title.lower().split():
+            if word in song:
+                matched += 1
+                # Remove word to avoid further comparisons to it
+                song.pop(song.index(word))
+
+        if matched > best_match[1]:
+            # print video_id, matched, title  # For testing purposes
+            best_match[0] = video_id
+            best_match[1] = matched
+            best_match[2] = title
+
+    return best_match[0]
 
 
 def yt_download(video_id):
@@ -95,4 +119,4 @@ def get_songs(songs):
     return
 
 
-# get_songs(songs)
+get_songs(songs)

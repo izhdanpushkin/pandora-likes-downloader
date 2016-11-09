@@ -1,8 +1,23 @@
 # This script processes pandora.html file and writes songs as lines
 # to songs.txt
+import requests
 from bs4 import BeautifulSoup
 
 file = "./pandora.html"
+user = raw_input('Type username you want to get likes from: \n')
+cookies = {'at':'wBwVDBd0bSwnjR29Hw5rSfPXK+OFmuiaA'}
+
+def collect_likes(user, index=5):
+    """Parse likes from user's account and write them to file."""
+    r = requests.get("https://www.pandora.com/content/tracklikes?likeStartIndex=0&thumbStartIndex={}&webname={}".format(index, user), cookies=cookies)
+    html = r.text
+    soup = BeautifulSoup(html, "html.parser")
+    if soup.find('div', 'infobox-body'):
+        write_songs(soup)
+        return collect_likes(user, index=index+10)
+    else:
+        print 'Done'
+        return None
 
 
 def read_file(f):
@@ -62,3 +77,4 @@ def write_songs(soup):
 
 
 # write_songs(read_file(file))
+collect_likes(user)

@@ -16,7 +16,7 @@ def collect_likes(user, index=5):
         write_songs(soup)
         return collect_likes(user, index=index+10)
     else:
-        print 'Done'
+        print('Done')
         return None
 
 

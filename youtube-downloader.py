@@ -5,7 +5,7 @@ import re
 from bs4 import BeautifulSoup
 
 songs = []
-with open ("./songs.txt", "r") as s:
+with open("./songs.txt", "r") as s:
     for e in s.readlines():
         if "/" in e:
             e = e.replace("/", "")
@@ -35,8 +35,8 @@ def yt_request(query):
         "https://www.youtube.com/results?search_query={}".format(query))
     soup = BeautifulSoup(r.text, "html.parser")
     videos = soup.find_all("div", "yt-lockup-video")
-    titles = soup.find_all("h3", 'yt-lockup-title')
-    best_match = ['', 0, '']
+    titles = soup.find_all("h3", "yt-lockup-title")
+    best_match = ["", 0, ""]
 
     for e in range(0, len(videos)):
         song = query.lower().split("+")

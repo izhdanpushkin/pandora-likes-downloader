@@ -6,10 +6,22 @@ from bs4 import BeautifulSoup
 
 songs = []
 with open("./songs.txt", "r") as s:
+    downloaded = ""
+    failed = ""
+    try:
+        with open("./songs-downloaded.txt", "r") as d:
+            downloaded = d.read()
+        with open("./songs-failed.txt", "r") as f:
+            failed = f.read()
+    except IOError:
+        pass
+
     for e in s.readlines():
         if "/" in e:
             e = e.replace("/", "")
         name = e.split(" | ")[0]
+        if name in downloaded or name in failed:
+            continue
         songs.append(name)
 
 
@@ -88,13 +100,18 @@ def download_file(dl_link, song, cnt=0):
         return download_file(dl_link, song, cnt+1)
     elif cnt >= 10:
         print("writing fucked up\n")
-        with open("./failed-songs.txt", "a+") as fails:
+        with open("./songs-failed.txt", "a+") as fails:
             line = (str(song + "\n"))
             if not line in fails:
                 fails.write(line)
-        return
+        return None
+
+    with open("./songs-downloaded.txt", "a+") as d:
+        line = (str(song + "\n"))
+        if not line in d:
+            d.write(line)
     print("finished writing " + song + "\n")
-    return
+    return None
 
 
 def get_songs(songs):
@@ -108,7 +125,7 @@ def get_songs(songs):
             dl_link = yt_download(request)
         except:
             print("downloading site fucked up with " + song + "\n")
-            with open("./failed-songs.txt", "a+") as fails:
+            with open("./songs-failed.txt", "a+") as fails:
                 line = (str(song + "\n"))
                 if not line in fails:
                     fails.write(line)

@@ -1,7 +1,12 @@
+# This script searches youtube for songs in 'songs.txt' and downloads
+# them as mp3 files.
 import json
-import os
-import requests
 import re
+import random
+import time
+import os
+from sig import sig
+import requests
 from bs4 import BeautifulSoup
 
 songs = []
@@ -73,12 +78,19 @@ def yt_request(query):
 
 
 def yt_download(video_id):
-    """Request download link from youtubeinmp3.com."""
-    link = ("https://www.youtubeinmp3.com/fetch/?format=JSON&video=" +
-            "https://www.youtube.com/watch?v={}".format(video_id))
-    r = requests.get(link)
-    json_text = json.loads(r.text)
-    dl_link = json_text["link"]
+    """Request download link from youtube-mp3.com."""
+    timestamp = str(int(time.time()))
+    tail = random.sample(range(100, 999), 2)
+    # Generate timestamp that complies with site's version
+    ts = [timestamp + str(min(tail)), timestamp + str(max(tail))]
+    push = 'http://www.youtube-mp3.org/a/pushItem/?item=https%3A//www.youtube.com/watch%\3Fv%3D{}&el=ma&bf=false&r={}&s={}'.format(video_id, ts[0], sig(ts[0]))
+    info = 'http://www.youtube-mp3.org/a/itemInfo/?video_id={}&ac=www&t=grp&r={}&s={}'.format(video_id, ts[1], sig(ts[1]))
+
+    requests.get(push)  # Make sure video is converted
+    r = requests.get(info)
+    txt = r.text.split('info = ')[1][:-1]  # JSON-friendly part of response
+    js = json.loads(txt)
+    dl_link = ('http://www.youtube-mp3.org/get?video_id={}&ts_create={}&r=MTg4LjIzMS4xMzEuNzQ%3D&h2={}&s={}'.format(video_id, js["ts_create"], js["h2"], sig(js["h2"])))
     return dl_link
 
 
@@ -99,7 +111,7 @@ def download_file(dl_link, song, cnt=0):
         print("({}) retrying writing ".format(cnt+1) + song)
         return download_file(dl_link, song, cnt+1)
     elif cnt >= 10:
-        print("writing fucked up\n")
+        print("writing messed up\n")
         with open("./songs-failed.txt", "a+") as fails:
             line = (str(song + "\n"))
             if not line in fails:
@@ -111,7 +123,7 @@ def download_file(dl_link, song, cnt=0):
         if not line in d:
             d.write(line)
     print("finished writing " + song + "\n")
-    return None
+    return True
 
 
 def get_songs(songs):
@@ -124,14 +136,14 @@ def get_songs(songs):
             request = yt_request(query)
             dl_link = yt_download(request)
         except:
-            print("downloading site fucked up with " + song + "\n")
+            print("downloading site messed up with " + song + "\n")
             with open("./songs-failed.txt", "a+") as fails:
                 line = (str(song + "\n"))
                 if not line in fails:
                     fails.write(line)
             continue
-        download_file(dl_link, song)
-        counter += 1
+        if download_file(dl_link, song):
+            counter += 1
     print("Songs downloaded - " + str(counter))
     return
 

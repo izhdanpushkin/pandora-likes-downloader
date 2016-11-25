@@ -4,19 +4,26 @@ import requests
 from bs4 import BeautifulSoup
 
 file = "./pandora.html"
-user = raw_input('Type username you want to get likes from: \n')
-cookies = {'at':'wBwVDBd0bSwnjR29Hw5rSfPXK+OFmuiaA'}
+user = raw_input("Type username you want to get likes from: \n")
+# The cookie used for parsing is valid for 1 month. In case the code doesn't
+# work - this is the first thing you should check. You can manually get a new
+# cookie value from your browser, example for google chrome would be: go to
+# settings > show advanced settings > content settings > all cookies and site
+# data, search for "pandora.com", click on "at" cookie and copy the value
+# of "Content" field. Then replace the right part of the dict below with
+# the value you"ve copied.
+cookies = {"at":"w/ovFNjIlbkaUNWIOI6cJOPcNpxGAB2ysFYbLTQ0FlaAbUr1N6AaJyTkAaU8maRVOvmjtwks3mL8%3D"}
 
-def collect_likes(user, index=5):
+def collect_likes(user, index=0):
     """Parse likes from user's account and write them to file."""
     r = requests.get("https://www.pandora.com/content/tracklikes?likeStartIndex=0&thumbStartIndex={}&webname={}".format(index, user), cookies=cookies)
     html = r.text
     soup = BeautifulSoup(html, "html.parser")
-    if soup.find('div', 'infobox-body'):
+    if soup.find("div", "infobox-body"):
         write_songs(soup)
         return collect_likes(user, index=index+10)
     else:
-        print('Done')
+        print("Done")
         return None
 
 
@@ -54,7 +61,7 @@ def write_songs(soup):
         for st in stations:
             for s in stations.get(st):
                 # Make line from song followed by the station it's from
-                song_line = ''.join((s, " | ", st, "\n"))
+                song_line = "".join((s, " | ", st, "\n"))
                 if s not in songs_set and s not in file:
                     songs_set.add(s)
                     f.write(song_line)
@@ -63,7 +70,7 @@ def write_songs(soup):
                     print("-- " + s + " was already added")
                     songs_dupes.append(s)
                 else:
-                    print("== " + s + ' is already on the list')
+                    print("== " + s + " is already on the list")
                     list_dupes.append(s)
         if not songs_set and not list_dupes:
             print("HTML file doesn't seem to have any songs")
